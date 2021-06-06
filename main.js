@@ -15,26 +15,51 @@ client.once('ready', () => {
 	console.log('Deckard is ready to count deaths');
 });
 
-const nerds = ['brooks', 'cody', 'mason', 'john', 'jack', 'jake', 'bubba']
+const nerds = ['Brooks', 'Cody', 'Mason', 'John', 'Jack', 'Jake', 'Bubba']
 client.on('message', message => {
 	// Avoid querying database if wrong channel or bad format
 	if (message.channel.name != 'diablo2' || !message.content.startsWith("!")) {
 		return
 	}
 
-	let index = nerds.indexOf(message.content.slice(1));
+	if (message.content == "!diablohelp") {
+			let allNerds = nerds.reduce((acc, curr) => acc + ', ' + curr)
+			message.channel.send(`I'm here to remember all the shameful times you died! I'll keep track of the following nerds: ${allNerds}.`);
+			return
+	}
+
+	// Manual override for deaths
+	if (message.content.startsWith("!set")) {
+		let parts = message.content.split(" ")
+		if (parts.length !== 3) {
+			return
+		}
+		let docRef = db.collection('deathcount').doc(process.env.DEATH_COLLECTION)
+		docRef.get().then(docSnap => {
+			let data = docSnap.data();
+			let resetNum = parseInt(parts[2])
+			if (data[parts[1]] !== undefined && resetNum != NaN) {
+				data[parts[1]] = resetNum
+			}
+
+			message.channel.send(`I'm just an old man, I must've miscounted! Looks like ${parts[1][0].toUpperCase() + parts[1].substring(1)} only died ${resetNum} times!`);
+			docRef.set(data).then(res => console.log(`Reset deaths for ${parts[1]} to ${resetNum}`))
+		})
+		return
+	}
+
+	let nerdName = message.content.slice(1).toLowerCase()
+	let index = nerds.indexOf(nerdName[0].toUpperCase() + nerdName.substring(1));
 	if (index >= 0) {
-		// Uppercase first letter of name
-		let nerdName = nerds[index][0].toUpperCase() + nerds[index].substring(1)
 		let docRef = db.collection('deathcount').doc(process.env.DEATH_COLLECTION)
 		docRef.get().then(docSnap => {
 			let data = docSnap.data()
-			let numDeaths = data[nerds[index]]
+			let numDeaths = data[nerdName]
 			numDeaths = numDeaths === undefined ? 0 : numDeaths + 1
 
-			message.channel.send(`${nerdName} died! They have been sheeton by Diablo ${numDeaths} times. Better luck next time!`);
+			message.channel.send(`${nerds[index]} died! They have been sheeton by Diablo ${numDeaths} times. Better luck next time!`);
 
-			data[nerds[index]] = data[nerds[index]] === undefined ? 0 : data[nerds[index]]+1
+			data[nerdName] = data[nerdName] === undefined ? 0 : data[nerdName]+1
 			docRef.set(data).then(res => console.log(`Updated deaths for ${nerdName} to ${numDeaths}`))
 		})
 	} else {
