@@ -1,4 +1,5 @@
 # Ignore secret
 .env
+firebase-sdk.json
 
 node_modules/
