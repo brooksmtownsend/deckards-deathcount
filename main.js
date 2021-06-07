@@ -16,16 +16,26 @@ client.once('ready', () => {
 });
 
 const nerds = ['Brooks', 'Cody', 'Mason', 'John', 'Jack', 'Jake', 'Bubba']
+const phrases = [
+'got sheeton by Diablo',
+'ran out of mana',
+'couldn\'t teepee in time',
+'found out health potions work over time, the hard way',
+'had a hard day, okay',
+'forgot how to close the inventory screen',
+'instantly TP\'ed back to town, in their own style',
+]
+
 client.on('message', message => {
 	// Avoid querying database if wrong channel or bad format
-	if (message.channel.name != 'diablo2' || !message.content.startsWith("!")) {
+	if (!message.channel.name.startsWith('diablo2') || !message.content.startsWith("!")) {
 		return
 	}
 
 	if (message.content == "!diablohelp") {
-			let allNerds = nerds.reduce((acc, curr) => acc + ', ' + curr)
-			message.channel.send(`I'm here to remember all the shameful times you died! I'll keep track of the following nerds: ${allNerds}.`);
-			return
+		let allNerds = nerds.reduce((acc, curr) => acc + ', ' + curr)
+		message.channel.send(`I'm here to remember all the shameful times you died! I'll keep track of the following nerds: ${allNerds}.\nI can understand the command !<nerd> to increment deaths, or !set <nerd> <number> to set the deaths.`);
+		return
 	}
 
 	// Manual override for deaths
@@ -57,7 +67,7 @@ client.on('message', message => {
 			let numDeaths = data[nerdName]
 			numDeaths = numDeaths === undefined ? 0 : numDeaths + 1
 
-			message.channel.send(`${nerds[index]} died! They have been sheeton by Diablo ${numDeaths} times. Better luck next time!`);
+			message.channel.send(`${nerds[index]} ${phrases[Math.floor(Math.random() * phrases.length)]}. Their total death count is: ${numDeaths}.`);
 
 			data[nerdName] = data[nerdName] === undefined ? 0 : data[nerdName]+1
 			docRef.set(data).then(res => console.log(`Updated deaths for ${nerdName} to ${numDeaths}`))
